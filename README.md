@@ -6,6 +6,6 @@ This python script does the following:
 
 Usage is as follows:
 
-python dtp.py <device/host> <template>
+python dtp.py '<device/host>' '<template>'
 
 Enjoy!
