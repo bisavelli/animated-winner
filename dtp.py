@@ -3,7 +3,6 @@ import jinja2
 import os 
 import sys
 import argparse
-from bracket_expansion import bracket_expansion
 
 def main():
 
@@ -21,8 +20,6 @@ def main():
 	loader = jinja2.FileSystemLoader(searchpath='./templates')
 	ENV = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
 
-	#you can also use filters to expand the jinja funtionality
-	ENV.filters['bracket_expansion'] = bracket_expansion
 
 	#Use this to read from yaml file from 'hosts' directory to populate the template
 	with open('hosts/' + HOST_INFORMATION + '_vars.yaml') as _:
