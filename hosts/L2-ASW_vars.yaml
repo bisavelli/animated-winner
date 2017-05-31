@@ -1,0 +1,22 @@
+---
+hostname: hostname.domain
+IOS_image: cat4500e-universalk9.SPA.03.06.02.E.152-2.E2
+location_address: 1234 Everywhere road, Anywhere USA
+LOC: ANYW
+fl: '2'
+vlans:
+  44: Network-Management
+  200: Voice
+  300: Data
+asw_port_number_to_csw01: 1/1/1
+csw01_port_number_to_asw: 1/2
+asw_port_number_to_csw02: 1/1/2
+csw02_port_number_to_asw: 1/2
+vlan33_asw_int: '10.44.1.10'
+vlan33_subnet_mask: '255.255.255.224'
+vlan33_gateway: '10.44.1.1'
+enable_secret: enablepassword
+admin_secret: adminpassword
+user_secret: usersecret
+aaa_secret: AAApassword
+

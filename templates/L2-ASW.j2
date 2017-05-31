@@ -1,0 +1,857 @@
+L2-ASW
+service password-encryption
+no ip http server
+no ip http secure-server
+ip domain-name linkedin.com
+ip domain lookup
+hostname {{config.hostname}}
+udld aggressive
+
+config-register 0x2102
+ 
+crypto key gen rsa general-keys modulus 2048
+
+boot system flash bootflash:{{config.IOS_image}}.conf
+
+ip ssh time-out 30
+ip ssh version 2
+
+logging buffered 20000 debugging
+no logging console
+logging monitor informational
+logging trap notifications
+logging facility local5
+logging source-interface Loopback0
+logging host 
+
+snmp-server community <> RO
+snmp-server location {{config.location_address}} 
+snmp-server contact 
+
+no banner motd
+
+banner login ^
+UNAUTHORIZED ACCESS TO THIS DEVICE IS PROHIBITED.
+This system is for the use of authorized users only. Individuals
+using this computer system without authority, or in excess of
+their authority, are subject to having all of their activities
+on this system monitored and recorded by system personnel.
+In the course of monitoring individuals improperly using this
+system, or in the course of system maintenance, the activities
+of authorized users may also be monitored.
+Anyone using this system expressly consents to such monitoring
+and is advised that if such monitoring reveals possible
+evidence of criminal activity, system personnel may provide the
+evidence of such monitoring to law enforcement officials.
+^
+
+line vty 0 15
+exec-timeout 30
+transport input ssh
+
+errdisable recovery interval 300
+errdisable recovery cause link-flap
+
+ntp server 
+
+
+vtp version 2
+vtp mode transparent
+vtp domain {{config.hostname}}
+vtp password {{config.hostname}}
+
+  {% for id, name in config.vlans.items() %}
+vlan {{ id }}
+ name {{ name }}
+  {% endfor %}
+
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+spanning-tree portfast bpduguard default
+spanning-tree loopguard default
+
+lldp run
+
+ip dhcp snooping
+no ip dhcp snooping information option
+ip dhcp snooping vlan 1-4094
+
+interface TenGigabitEthernet{{config.asw_port_number_to_csw01}}
+ description host-eth{{config.csw01_port_number_to_asw}}
+ switchport mode trunk
+ logging event link-status
+ logging event trunk-status
+ spanning-tree link-type point-to-point
+ ip dhcp snooping trust
+
+interface TenGigabitEthernet{{config.asw_port_number_to_csw02}}
+ description host-eth{{config.csw02_port_number_to_asw}}
+ switchport mode trunk
+ logging event link-status
+ logging event trunk-status
+ spanning-tree link-type point-to-point
+
+interface range GigabitEthernet1/1 - 48
+ switchport access vlan 30{{config.fl}}
+ switchport mode access
+ switchport voice vlan 20{{config.fl}}
+ storm-control broadcast level 10.00
+ storm-control action shutdown
+ spanning-tree link-type point-to-point
+ ip dhcp snooping limit rate 20
+
+interface GigabitEthernetX/X
+description VC Room <Room name> Cisco <Device Type>
+ switchport access vlan 30{{config.fl}}
+ switchport mode access
+ switchport voice vlan 20{{config.fl}}
+ storm-control broadcast level 10.00
+ storm-control action shutdown
+ spanning-tree link-type point-to-point
+ ip dhcp snooping limit rate 20
+
+ip default-gateway {{config.vlan44_gateway}}
+
+interface Vlan1
+no ip address
+shutdown
+
+interface Vlan44
+description network-mgmt
+ ip address {{config.vlan44_asw_int}} {{config.subnet_mask}}
+ no ip redirects
+ no ip unreachables
+ no ip proxy-arp
+no shut
+
+enable secret {{config.enable_secret}}
+username admin privilege 15 secret {{config.admin_secret}}
+username user privilege 15 secret {{config.user_secret}}
+
+aaa group server tacacs+ tacgroup
+server-private <> timeout 3 key {{config.aaa_secret}}
+ip tacacs source-interface Loopback0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

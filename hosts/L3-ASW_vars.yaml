@@ -1,0 +1,34 @@
+---
+hostname: hostname.domain
+IOS_image: cat4500e-universalk9.SPA.03.06.02.E.152-2.E2
+location_address: 1234 anywhere, 
+LOC: ANWH
+fl: '2'
+vlans:
+  44: Network-Management
+  200: Voice
+  300: Data
+asw_port_number_to_csw01: 5/1
+csw01_port_number_to_asw: 1/2
+csw01_uplink_v4ip: '10.10.10.1'
+csw01_uplink_v6ip:
+asw_port_number_to_csw02: 6/1
+csw02_port_number_to_asw: 1/2
+csw02_uplink_v4ip: '10.10.10.2'
+csw02_uplink_v6ip: '2620::7'
+user_linecards: '1-5'
+v4Loopback0: '10.100.100.100'
+v6Loopback0: '2620::5'
+vlan200_v4ip: '10.10.10.10'
+vlan200_v6ip: '2620::10'
+vlan300_v4ip: '10.10.10.10'
+vlan300_v6ip: '2620::10'
+DHCP_server_1: '10.15.10.120'
+DHCP_server_2: 10.15.10.130'
+ospf_process_id:
+asw_ospf_area: '0.0.0.0'
+enable_secret: enablepassword
+admin_secret: adminpassword
+user_secret: userpassword
+aaa_secret: AAApassword
+

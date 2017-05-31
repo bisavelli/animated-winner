@@ -1,0 +1,210 @@
+L3-ASW
+service nagle
+no service pad
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service linenumber
+service compress-config
+service sequence-numbers
+hostname {{ config.hostname }}
+
+ip routing
+ipv6 unicast-routing
+
+crypto key gen rsa general-keys modulus 2048
+
+boot system flash bootflash:{{ config.IOS_image }}.conf
+
+ip ssh time-out 30
+ip ssh version 2
+
+logging buffered 20000 debugging
+no logging console
+logging monitor informational
+logging trap notifications
+logging facility local5
+logging source-interface Loopback0
+
+snmp-server community <> RO
+snmp-server location {{ config.location_address }} 
+snmp-server contact 
+
+no banner motd
+
+banner login ^
+UNAUTHORIZED ACCESS TO THIS DEVICE IS PROHIBITED.
+This system is for the use of authorized users only. Individuals
+using this computer system without authority, or in excess of
+their authority, are subject to having all of their activities
+on this system monitored and recorded by system personnel.
+In the course of monitoring individuals improperly using this
+system, or in the course of system maintenance, the activities
+of authorized users may also be monitored.
+Anyone using this system expressly consents to such monitoring
+and is advised that if such monitoring reveals possible
+evidence of criminal activity, system personnel may provide the
+evidence of such monitoring to law enforcement officials.
+^
+
+line vty 0 15
+exec-timeout 30
+transport input ssh
+
+errdisable recovery interval 300
+errdisable recovery cause link-flap
+
+ntp server <>
+
+
+vtp version 2
+vtp mode transparent
+vtp domain {{ config.hostname }}
+vtp password {{ config.hostname }}
+
+  {% for id, name in config.vlans.items() %}
+vlan {{ id }}
+ name {{ name }}
+  {% endfor %}
+
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+spanning-tree portfast bpduguard default
+spanning-tree loopguard default
+spanning-tree vlan 1-4094 priority 4096
+
+lldp run
+
+ip dhcp snooping
+no ip dhcp snooping information option
+ip dhcp snooping vlan 1-4094
+
+interface Loopback0
+ip address {{ config.v4Loopback0 }}
+ipv6 address {{ config.v6Loopback0 }}
+ospfv3 {{ config.ospf_process_id }} ipv6 area {{ config.asw_ospf_area}}
+
+interface TenGigabitEthernet{{config.asw_port_number_to_csw01}}
+description host-eth{{config.csw01_port_number_to_asw}}
+no switchport
+ip address {{ config.csw01_uplink_v4ip}}
+ip ospf network point-to-point
+ip ospf hello-interval 1
+logging event link-status
+logging event trunk-status
+ipv6 address {{ config.csw01_uplink_v6ip}}
+ipv6 nd ra suppress all
+ospfv3 network point-to-point
+ospfv3 hello-interval 1
+ospfv3 {{ config.ospf_process_id }} ipv6 area {{ config.asw_ospf_area}}
+
+interface TenGigabitEthernet{{config.asw_port_number_to_csw02}}
+description host-eth{{config.csw02_port_number_to_asw}}
+no switchport
+ip address {{ config.csw02_uplink_v4ip }}
+ip ospf network point-to-point
+ip ospf hello-interval 1
+logging event link-status
+logging event trunk-status
+ipv6 address {{ config.csw02_uplink_v6ip }}
+ipv6 nd ra suppress all
+ospfv3 network point-to-point
+ospfv3 hello-interval 1
+ospfv3 {{ config.ospf_process_id }} ipv6 area {{ config.asw_ospf_area}}
+
+interface range GigabitEthernet {{ config.user_linecards }}/1 - 48
+switchport access vlan 600
+switchport mode access
+switchport voice vlan 300
+storm-control broadcast level 10.00
+storm-control action shutdown
+spanning-tree link-type point-to-point
+ip dhcp snooping limit rate 20
+
+interface Vlan1
+no ip address
+shutdown
+
+interface Vlan200
+description VoIP
+ip address {{config.vlan200_v4ip}} {{config.vlan200_subnet}}
+ip helper-address {{ config.DHCP_server_1 }}
+ip helper-address {{ config.DHCP_server_2 }}
+no ip redirects
+no ip unreachables
+no ip proxy-arp
+ipv6 address {{config.vlan200_v6ip}}
+ipv6 dhcp relay destination {{config.DHCP_v6_server_1}}
+ipv6 dhcp relay destination {{config.DHCP_v6_server_2}}
+ipv6 nd prefix default 86400 86400 no-autoconfig
+ipv6 nd managed-config-flag
+ipv6 nd other-config-flag
+no ipv6 redirects
+no ipv6 unreachables
+ospfv3 {{ config.ospf_process_id }} ipv6 area {{ config.asw_ospf_area}}
+no shut
+!
+interface Vlan300
+description Data
+ip address {{config.vlan300_v4ip}} {{config.vlan300_subnet}}
+ip helper-address {{ config.DHCP_server_1 }}
+ip helper-address {{ config.DHCP_server_2 }}
+no ip redirects
+no ip unreachables
+no ip proxy-arp
+ipv6 address {{config.vlan300_v6ip}}
+ipv6 dhcp relay destination {{config.DHCP_v6_server_1}}
+ipv6 dhcp relay destination {{config.DHCP_v6_server_2}}
+ipv6 nd prefix default 86400 86400 no-autoconfig
+ipv6 nd managed-config-flag
+ipv6 nd other-config-flag
+no ipv6 redirects
+no ipv6 unreachables
+ospfv3 {{ config.ospf_process_id }} ipv6 area {{ config.asw_ospf_area}}
+no shut
+
+router ospfv3 1
+router-id {{ config.v4Loopback0}}
+auto-cost reference-bandwidth 160000
+area {{ config.asw_ospf_area}} stub no-summary
+!
+address-family ipv6 unicast
+passive-interface Vlan200
+passive-interface Vlan300
+exit-address-family
+!
+
+router ospf 1
+router-id {{ config.v4Loopback0 }}
+log-adjacency-changes detail
+auto-cost reference-bandwidth 160000
+area {{ config.asw_ospf_area }} stub no-summary
+passive-interface Vlan200
+passive-interface Vlan300
+network {{ config.v4Loopback0 }} 0.0.0.0 area {{ config.asw_ospf_area}} ! Loopback
+network {{ config.csw01_uplink_v4ip}} 0.0.0.0 area {{ config.asw_ospf_area}} ! T1/1/1
+network {{ config.csw02_uplink_v4ip}} 0.0.0.0 area {{ config.asw_ospf_area}} ! T1/1/2
+network {{config.vlan200_v4ip }} 0.0.0.0 area {{ config.asw_ospf_area}}  ! V300
+network {{config.vlan300_v4ip}} 0.0.0.0 area {{ config.asw_ospf_area}}  ! V600
+
+enable secret {{config.enable_secret}}
+username admin privilege 15 secret {{ config.admin_secret }}
+username user privilege 15 secret {{config.user_secret }}
+
+
+aaa group server tacacs+ tacgroup
+server-private <> timeout 3 key {{ config.aaa_secret }}
+ip tacacs source-interface Loopback0
+
+aaa new-model
+aaa authentication login default group tacgroup local
+aaa authentication enable default group tacgroup enable
+aaa authorization exec default group tacgroup if-authenticated
+aaa authorization commands 15 default group tacgroup if-authenticated
+aaa accounting exec default start-stop group tacgroup
+aaa accounting commands 15 default start-stop group tacgroup
+aaa accounting system default start-stop group tacgroup
+aaa session-id common
+
